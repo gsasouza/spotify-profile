@@ -56,7 +56,7 @@ app.get('/login', function(req, res) {
     }));
 });
 let artistas = new Array();
-let musiquinhas = '';
+let musiquinhas = new Array();
 app.get('/callback', function(req, res) {
 
   // your application requests refresh and access tokens
@@ -96,7 +96,7 @@ app.get('/callback', function(req, res) {
       };
 
       const options2 = {
-        url: 'https://api.spotify.com/v1/me/player/recently-played',
+        url: 'https://api.spotify.com/v1/me/player/recently-played?limit=1',
         headers: { 'Authorization': 'Bearer ' + body.access_token },
         json: true
       };
@@ -107,22 +107,28 @@ app.get('/callback', function(req, res) {
         artistas = body.items.map(function(element){
           return element.name;
         });
-        console.log(artistas);
+        console.log(artistas); //debug
         //console.log('/data?' + querystring.stringify(body));
         
 
-
+        res.redirect('/data?' +
+          querystring.stringify(body)); // por enquanto gambiarra, pois se nao esta aqui que eh a parte mais lenta do processo, vai pegar undefined.... Todo:Como proceder??
         
       });
       request.get(options2,function(error,response,body) {
-        musiquinhas = body.items[0].track.name;
-        console.log(musiquinhas);
+        //console.log(body.items); //debug
+        musiquinhas.push(body.items[0].track.artists[0].name);
+        musiquinhas.push(body.items[0].track.name);
+        console.log(musiquinhas); //debug
 
 
 
-        //essa porra fode o rolê, entender onde por
+        
+        /* Porque Return? sem return funciona melhor
         return res.redirect('/data?' +
           querystring.stringify(body));
+        */
+
       });
       
       
@@ -185,8 +191,8 @@ app.get('/data', (req, res) => {
     '18.'+ artistas[17] + '\n' +
     '19.'+ artistas[18] + '\n' +
     '20.'+ artistas[19] + '\n' +
-    'Ultima musica tocada nesse baralho:' + musiquinhas;
-  console.log('here');
+    'Ultima musica tocada nesse baralho:'+musiquinhas[0]+'-' + musiquinhas[1];
+  console.log('here'); //debug
   res.send(printatual);
   //for(i=0;i<artistas.length;i++)res.send(artistas[i]);
   //res.send(req.query)
