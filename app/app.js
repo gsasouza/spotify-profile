@@ -13,9 +13,11 @@ const querystring = require('querystring');
 const cookieParser = require('cookie-parser');
 const axios = require('axios');
 
-const client_id = '1b83fcce67524a858a05fec2bfff28f9'; // Your client id
-const client_secret = '6119312c41554d5e8a3d6c1f6e81c6e7'; // Your secret
-const redirect_uri = 'http://localhost:8080/callback'; // Your redirect uri
+//const optionsX = require('./options');
+
+const client_id = '1b83fcce67524a858a05fec2bfff28f9';
+const client_secret = '6119312c41554d5e8a3d6c1f6e81c6e7';
+const redirect_uri = 'http://localhost:8080/callback';
 
 /**
  * Generates a random string containing numbers and letters
@@ -88,7 +90,8 @@ app.get('/callback', function(req, res) {
 
   request.post(authOptions, function(error, response, body) {
     if (!error && response.statusCode === 200) {
-
+      //const options = optionsX.topArtLong(body.access_token);
+      
       const options = {
         url: 'https://api.spotify.com/v1/me/top/artists',
         headers: { 'Authorization': 'Bearer ' + body.access_token },
@@ -96,43 +99,43 @@ app.get('/callback', function(req, res) {
       };
 
       const options2 = {
-        url: 'https://api.spotify.com/v1/me/player/recently-played?limit=1',
+        url: 'https://api.spotify.com/v1/me/player/recently-played?limit=10', //?limit=1 **PORQUE PESTE TÁ COM ERROR NO LIMITE? COMO SE GUARDASSE VALORES VAZIOS, NOT TRUSTED**
         headers: { 'Authorization': 'Bearer ' + body.access_token },
         json: true
       };
 
       // use the access token to access the Spotify Web API
       request.get(options, function(error, response, body) {   
-        //console.log(body);
+        //console.log(body); //debug
         artistas = body.items.map(function(element){
           return element.name;
         });
         console.log(artistas); //debug
         //console.log('/data?' + querystring.stringify(body));
-        
 
-        res.redirect('/data?' +
-          querystring.stringify(body)); // por enquanto gambiarra, pois se nao esta aqui que eh a parte mais lenta do processo, vai pegar undefined.... Todo:Como proceder??
+
+
+        request.get(options2,function(error,response,body) {
+          //console.log(body.items); //debug
+          musiquinhas.push(body.items[0].track.artists[0].name);
+          musiquinhas.push(body.items[0].track.name);
+          console.log(musiquinhas); //debug
+
+          return res.redirect('/data?' +
+            querystring.stringify(body));
+
+
+          
+          /* Porque Return? sem return funciona melhor
+          return res.redirect('/data?' +
+            querystring.stringify(body));
+          */
+
+      });
+
         
       });
-      request.get(options2,function(error,response,body) {
-        //console.log(body.items); //debug
-        musiquinhas.push(body.items[0].track.artists[0].name);
-        musiquinhas.push(body.items[0].track.name);
-        console.log(musiquinhas); //debug
-
-
-
-        
-        /* Porque Return? sem return funciona melhor
-        return res.redirect('/data?' +
-          querystring.stringify(body));
-        */
-
-      });
-      
-      
-      
+           
       // we can also pass the token to the browser to make requests from there
 
     }
@@ -196,10 +199,8 @@ app.get('/data', (req, res) => {
   res.send(printatual);
   //for(i=0;i<artistas.length;i++)res.send(artistas[i]);
   //res.send(req.query)
-  //res.send(for(i=0;i<artistas.length;i++)artistas[i]);
-    
+  //res.send(for(i=0;i<artistas.length;i++)artistas[i]);   
 })
-
 
 console.log('Listening on 8080');
 app.listen(8080);
