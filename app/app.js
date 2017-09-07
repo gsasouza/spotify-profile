@@ -1,10 +1,6 @@
 /**
- * This is an example of a basic node.js script that performs
- * the Authorization Code oAuth2 flow to authenticate against
- * the Spotify Accounts.
- *
- * For more information, read
- * https://developer.spotify.com/web-api/authorization-guide/#authorization_code_flow
+ * This was done with the help of the Spotify API
+ * https://developer.spotify.com/web-api/
  */
 
 const express = require('express'); // Express web server framework
@@ -59,6 +55,9 @@ app.get('/login', function(req, res) {
 });
 let artistas = new Array();
 let musiquinhas = new Array();
+let artJ = {'recentes':{},
+            'meio':{},
+            'geral':{}};
 app.get('/callback', function(req, res) {
 
   // your application requests refresh and access tokens
@@ -91,9 +90,24 @@ app.get('/callback', function(req, res) {
   request.post(authOptions, function(error, response, body) {
     if (!error && response.statusCode === 200) {
       //const options = optionsX.topArtLong(body.access_token);
-      
-      const options = {
-        url: 'https://api.spotify.com/v1/me/top/artists',
+
+      //OPTIONS SHORT TIME  ARTISTS
+      const optionsSA = {
+        url: 'https://api.spotify.com/v1/me/top/artists?time_range=short_term',
+        headers: { 'Authorization': 'Bearer ' + body.access_token },
+        json: true
+      };
+
+      //OPTIONS MEDIUM TIME ARTISTS
+      const optionsMA = {
+        url: 'https://api.spotify.com/v1/me/top/artists?time_range=medium_term',
+        headers: { 'Authorization': 'Bearer ' + body.access_token },
+        json: true
+      };
+
+      //OPTIONS LONG TIME ARTISTS
+      const optionsLA = {
+        url: 'https://api.spotify.com/v1/me/top/artists?time_range=long_term',
         headers: { 'Authorization': 'Bearer ' + body.access_token },
         json: true
       };
@@ -105,17 +119,61 @@ app.get('/callback', function(req, res) {
       };
 
       // use the access token to access the Spotify Web API
-      request.get(options, function(error, response, body) {   
+      request.get(optionsMA, function(error, response, body) {   
         //console.log(body); //debug
+        let count = 1; //Because it goes from #1 to #10
         artistas = body.items.map(function(element){
+          artJ['meio'][count] = element.name;
+          count ++;
           return element.name;
         });
-        console.log(artistas); //debug
+        //console.log(artJ); //debug
         //console.log('/data?' + querystring.stringify(body));
 
 
 
-        request.get(options2,function(error,response,body) {
+
+
+        //-----------
+        //TESTING
+        let p1 = new Promise(
+          function(resolve,reject){
+            //ARTISTS SHORT TERM
+            request.get(optionsSA, function(error, response, body) {   
+              //console.log(body); //debug
+              let count = 1; //Because it goes from #1 to #10
+
+              body.items.map(function(element){
+                artJ['recentes'][count] = element.name;
+                count ++;
+                //return element.name;
+              });
+              //console.log(artJ); //debug
+              //console.log('/data?' + querystring.stringify(body));
+
+
+              //ARTISTS LONG TERM
+              request.get(optionsLA, function(error, response, body) {   
+                //console.log(body); //debug
+                let count = 1; //Because it goes from #1 to #10
+                
+                body.items.map(function(element){
+                  artJ['geral'][count] = element.name;
+                  count ++;
+                  //return element.name;
+                });
+                console.log(artJ); //debug
+                //console.log('/data?' + querystring.stringify(body));
+                });
+              });
+            
+          });
+        
+
+
+        //------------------------
+        p1.then(
+          request.get(options2,function(error,response,body) {
           //console.log(body.items); //debug
           musiquinhas.push(body.items[0].track.artists[0].name);
           musiquinhas.push(body.items[0].track.name);
@@ -123,15 +181,12 @@ app.get('/callback', function(req, res) {
 
           return res.redirect('/data?' +
             querystring.stringify(body));
-
-
           
           /* Porque Return? sem return funciona melhor
           return res.redirect('/data?' +
             querystring.stringify(body));
           */
-
-      });
+          }));
 
         
       });
@@ -195,7 +250,7 @@ app.get('/data', (req, res) => {
     '19.'+ artistas[18] + '\n' +
     '20.'+ artistas[19] + '\n' +
     'Ultima musica tocada nesse baralho:'+musiquinhas[0]+'-' + musiquinhas[1];
-  console.log('here'); //debug
+  console.log('information sent.'); //debug
   res.send(printatual);
   //for(i=0;i<artistas.length;i++)res.send(artistas[i]);
   //res.send(req.query)
