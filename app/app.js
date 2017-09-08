@@ -3,8 +3,8 @@
  * https://developer.spotify.com/web-api/
  */
 
-const express = require('express'); // Express web server framework
-const request = require('request'); // "Request" library
+const express = require('express');
+const request = require('request');
 const querystring = require('querystring');
 const cookieParser = require('cookie-parser');
 const axios = require('axios');
@@ -53,8 +53,6 @@ app.get('/login', function(req, res) {
       state: state
     }));
 });
-//let artistas = new Array();
-//let musiquinhas = new Array();
 
 let artJ = {
   'artistas':{'recentes':{},
@@ -66,7 +64,6 @@ let artJ = {
   'ultimatocada':''
 };
 app.get('/callback', function(req, res) {
-
   // your application requests refresh and access tokens
   // after checking the state parameter
 
@@ -148,7 +145,6 @@ app.get('/callback', function(req, res) {
         json: true
       };
 
-     
 
       //-----------
       //WORK IN PROGRESS
@@ -189,7 +185,7 @@ app.get('/callback', function(req, res) {
             
           });
 
-          resolve(console.log('done'));
+          resolve(console.log('done pt.1'));
           
         });
 
@@ -223,17 +219,13 @@ app.get('/callback', function(req, res) {
             let count = 1; //Because it goes from #1 to #10
             
             body.items.map(function(element){
-              console.log(element.artists[0].name);
               artJ['musicas']['geral'][count] = element.artists[0].name + ' - ' + element.name;
               count ++;
             });
             console.log(artJ); //debug
           });
 
-          resolve(console.log('done'));
-
-
-
+          resolve(console.log('done pt.2'));
 
         });
       
@@ -253,7 +245,6 @@ app.get('/callback', function(req, res) {
         }));
 
       //------------------------
-      // we can also pass the token to the browser to make requests from there
 
     }
     else {
@@ -290,28 +281,8 @@ app.get('/refresh_token', function(req, res) {
   });
 });
 
+
 app.get('/data', (req, res) => {
-  /*let printatual = 'Artistas Topzeras dos ultimos 6 meses: '+'1.'+ artistas[0] + '\n' +
-    '2.'+ artistas[1] + '\n' +
-    '3.'+ artistas[2] + '\n' +
-    '4.'+ artistas[3] + '\n' +
-    '5.'+ artistas[4] + '\n' +
-    '6.'+ artistas[5] + '\n' +
-    '7.'+ artistas[6] + '\n' +
-    '8.'+ artistas[7] + '\n' +
-    '9.'+ artistas[8] + '\n' +
-    '10.'+ artistas[9] + '\n' +
-    '11.'+ artistas[10] + '\n' +
-    '12.'+ artistas[11] + '\n' +
-    '13.'+ artistas[12] + '\n' +
-    '14.'+ artistas[13] + '\n' +
-    '15.'+ artistas[14] + '\n' +
-    '16.'+ artistas[15] + '\n' +
-    '17.'+ artistas[16] + '\n' +
-    '18.'+ artistas[17] + '\n' +
-    '19.'+ artistas[18] + '\n' +
-    '20.'+ artistas[19] + '\n' +
-    'Ultima musica tocada nesse baralho:'+musiquinhas[0]+'-' + musiquinhas[1];*/
   console.log('information sent.'); //debug
   res.send(artJ);
 })
