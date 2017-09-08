@@ -53,11 +53,18 @@ app.get('/login', function(req, res) {
       state: state
     }));
 });
-let artistas = new Array();
-let musiquinhas = new Array();
-let artJ = {'recentes':{},
-            'meio':{},
-            'geral':{}};
+//let artistas = new Array();
+//let musiquinhas = new Array();
+
+let artJ = {
+  'artistas':{'recentes':{},
+              'meio':{},
+              'geral':{}},
+  'musicas':{'recentes':{},
+              'meio':{},
+              'geral':{}},
+  'ultimatocada':''
+};
 app.get('/callback', function(req, res) {
 
   // your application requests refresh and access tokens
@@ -91,6 +98,7 @@ app.get('/callback', function(req, res) {
     if (!error && response.statusCode === 200) {
       //const options = optionsX.topArtLong(body.access_token);
 
+      //ARTISTS
       //OPTIONS SHORT TIME  ARTISTS
       const optionsSA = {
         url: 'https://api.spotify.com/v1/me/top/artists?time_range=short_term',
@@ -112,73 +120,129 @@ app.get('/callback', function(req, res) {
         json: true
       };
 
+      //TRACKS
+      //OPTIONS SHORT TIME  TRACKS
+      const optionsST = {
+        url: 'https://api.spotify.com/v1/me/top/tracks?time_range=short_term',
+        headers: { 'Authorization': 'Bearer ' + body.access_token },
+        json: true
+      };
+
+      //OPTIONS MEDIUM TIME TRACKS
+      const optionsMT = {
+        url: 'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term',
+        headers: { 'Authorization': 'Bearer ' + body.access_token },
+        json: true
+      };
+
+      //OPTIONS LONG TIME TRACKS
+      const optionsLT = {
+        url: 'https://api.spotify.com/v1/me/top/tracks?time_range=long_term',
+        headers: { 'Authorization': 'Bearer ' + body.access_token },
+        json: true
+      };
+
       const options2 = {
         url: 'https://api.spotify.com/v1/me/player/recently-played?limit=10', //?limit=1 **PORQUE PESTE TÁ COM ERROR NO LIMITE? COMO SE GUARDASSE VALORES VAZIOS, NOT TRUSTED**
         headers: { 'Authorization': 'Bearer ' + body.access_token },
         json: true
       };
 
-      // use the access token to access the Spotify Web API
-      request.get(optionsMA, function(error, response, body) {   
-        //console.log(body); //debug
-        let count = 1; //Because it goes from #1 to #10
-        artistas = body.items.map(function(element){
-          artJ['meio'][count] = element.name;
-          count ++;
-          return element.name;
-        });
-        //console.log(artJ); //debug
-        //console.log('/data?' + querystring.stringify(body));
+     
 
+      //-----------
+      //WORK IN PROGRESS
+      let p1 = new Promise(
+        function(resolve,reject){
+          // use the access token to access the Spotify Web API
 
+          //ARTISTS SHORT TERM
+          request.get(optionsSA, function(error, response, body) {   
+            let count = 1; //Because it goes from #1 to #10
 
+            body.items.map(function(element){
+              artJ['artistas']['recentes'][count] = element.name;
+              count ++;
+            });
+          });
 
+          //ARTISTS MEDIUM TERM
+          request.get(optionsMA, function(error, response, body) {   
+            let count = 1; //Because it goes from #1 to #10
+            //let artists used to receive the return of this function (return element.name)
+            body.items.map(function(element){
+              artJ['artistas']['meio'][count] = element.name;
+              count ++;
+            });
+            //console.log(artJ); //debug
+            //console.log('/data?' + querystring.stringify(body));
+          });
 
-        //-----------
-        //TESTING
-        let p1 = new Promise(
-          function(resolve,reject){
-            //ARTISTS SHORT TERM
-            request.get(optionsSA, function(error, response, body) {   
-              //console.log(body); //debug
-              let count = 1; //Because it goes from #1 to #10
-
-              body.items.map(function(element){
-                artJ['recentes'][count] = element.name;
-                count ++;
-                //return element.name;
-              });
-              //console.log(artJ); //debug
-              //console.log('/data?' + querystring.stringify(body));
-
-
-              //ARTISTS LONG TERM
-              request.get(optionsLA, function(error, response, body) {   
-                //console.log(body); //debug
-                let count = 1; //Because it goes from #1 to #10
-                
-                body.items.map(function(element){
-                  artJ['geral'][count] = element.name;
-                  count ++;
-                  //return element.name;
-                });
-                console.log(artJ); //debug
-                //console.log('/data?' + querystring.stringify(body));
-                });
-              });
+          //ARTISTS LONG TERM
+          request.get(optionsLA, function(error, response, body) {   
+            let count = 1; //Because it goes from #1 to #10
+            
+            body.items.map(function(element){
+              artJ['artistas']['geral'][count] = element.name;
+              count ++;
+            });
             
           });
-        
+
+          resolve(console.log('done'));
+          
+        });
 
 
-        //------------------------
-        p1.then(
-          request.get(options2,function(error,response,body) {
-          //console.log(body.items); //debug
-          musiquinhas.push(body.items[0].track.artists[0].name);
-          musiquinhas.push(body.items[0].track.name);
-          console.log(musiquinhas); //debug
+      let p2 = new Promise(
+        function(resolve, reject){
 
+          //TRACKS SHORT TERM
+          request.get(optionsST, function(error, response, body) {   
+            let count = 1; //Because it goes from #1 to #10
+
+            body.items.map(function(element){
+              artJ['musicas']['recentes'][count] = element.artists[0].name + ' - ' + element.name;
+              count ++;
+            });
+          });
+
+          //TRACKS MEDIUM TERM
+          request.get(optionsMT, function(error, response, body) {   
+            let count = 1; //Because it goes from #1 to #10
+            
+            body.items.map(function(element){
+              artJ['musicas']['meio'][count] = element.artists[0].name + ' - ' + element.name;
+              count ++;
+            });
+           
+          });
+
+          //TRACKS LONG TERM
+          request.get(optionsLT, function(error, response, body) {   
+            let count = 1; //Because it goes from #1 to #10
+            
+            body.items.map(function(element){
+              console.log(element.artists[0].name);
+              artJ['musicas']['geral'][count] = element.artists[0].name + ' - ' + element.name;
+              count ++;
+            });
+            console.log(artJ); //debug
+          });
+
+          resolve(console.log('done'));
+
+
+
+
+        });
+      
+
+      p1.then(
+        request.get(options2,function(error,response,body) {
+          
+          artJ['ultimatocada'] = body.items[0].track.artists[0].name + ' - ' + body.items[0].track.name;
+          console.log(artJ['ultimatocada']);
           return res.redirect('/data?' +
             querystring.stringify(body));
           
@@ -186,11 +250,9 @@ app.get('/callback', function(req, res) {
           return res.redirect('/data?' +
             querystring.stringify(body));
           */
-          }));
+        }));
 
-        
-      });
-           
+      //------------------------
       // we can also pass the token to the browser to make requests from there
 
     }
@@ -229,7 +291,7 @@ app.get('/refresh_token', function(req, res) {
 });
 
 app.get('/data', (req, res) => {
-  let printatual = 'Artistas Topzeras dos ultimos 6 meses: '+'1.'+ artistas[0] + '\n' +
+  /*let printatual = 'Artistas Topzeras dos ultimos 6 meses: '+'1.'+ artistas[0] + '\n' +
     '2.'+ artistas[1] + '\n' +
     '3.'+ artistas[2] + '\n' +
     '4.'+ artistas[3] + '\n' +
@@ -249,12 +311,9 @@ app.get('/data', (req, res) => {
     '18.'+ artistas[17] + '\n' +
     '19.'+ artistas[18] + '\n' +
     '20.'+ artistas[19] + '\n' +
-    'Ultima musica tocada nesse baralho:'+musiquinhas[0]+'-' + musiquinhas[1];
+    'Ultima musica tocada nesse baralho:'+musiquinhas[0]+'-' + musiquinhas[1];*/
   console.log('information sent.'); //debug
-  res.send(printatual);
-  //for(i=0;i<artistas.length;i++)res.send(artistas[i]);
-  //res.send(req.query)
-  //res.send(for(i=0;i<artistas.length;i++)artistas[i]);   
+  res.send(artJ);
 })
 
 console.log('Listening on 8080');
