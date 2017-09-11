@@ -64,11 +64,21 @@ let artJ = {
   'ultimatocada':''
 };
 app.get('/callback', function(req, res) {
-  // your application requests refresh and access tokens
-  // after checking the state parameter
-
-  var code = req.query.code || null;
-  var state = req.query.state || null;
+  const data = {
+    artists: {
+      recents: [],
+      middle: [],
+      general: []
+    },
+    tracks: {
+      recents: [],
+      middle: [],
+      general: []
+    },
+    lastMusic: ''
+  }
+  const code = req.query.code || null;
+  const state = req.query.state || null;
   var storedState = req.cookies ? req.cookies[stateKey] : null;
 
   if (state === null || state !== storedState) {
@@ -78,6 +88,7 @@ app.get('/callback', function(req, res) {
       }));
   }
   res.clearCookie(stateKey);
+
   const authOptions = {
     url: 'https://accounts.spotify.com/api/token',
     form: {
@@ -93,166 +104,43 @@ app.get('/callback', function(req, res) {
 
   request.post(authOptions, function(error, response, body) {
     if (!error && response.statusCode === 200) {
-      //const options = optionsX.topArtLong(body.access_token);
 
-      //ARTISTS
-      //OPTIONS SHORT TIME  ARTISTS
-      const optionsSA = {
-        url: 'https://api.spotify.com/v1/me/top/artists?time_range=short_term',
-        headers: { 'Authorization': 'Bearer ' + body.access_token },
-        json: true
+      function makeOptions(url){
+        return {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + body.access_token },
+          json: true,
+          url: url
+        }
       };
-
-      //OPTIONS MEDIUM TIME ARTISTS
-      const optionsMA = {
-        url: 'https://api.spotify.com/v1/me/top/artists?time_range=medium_term',
-        headers: { 'Authorization': 'Bearer ' + body.access_token },
-        json: true
-      };
-
-      //OPTIONS LONG TIME ARTISTS
-      const optionsLA = {
-        url: 'https://api.spotify.com/v1/me/top/artists?time_range=long_term',
-        headers: { 'Authorization': 'Bearer ' + body.access_token },
-        json: true
-      };
-
-      //TRACKS
-      //OPTIONS SHORT TIME  TRACKS
-      const optionsST = {
-        url: 'https://api.spotify.com/v1/me/top/tracks?time_range=short_term',
-        headers: { 'Authorization': 'Bearer ' + body.access_token },
-        json: true
-      };
-
-      //OPTIONS MEDIUM TIME TRACKS
-      const optionsMT = {
-        url: 'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term',
-        headers: { 'Authorization': 'Bearer ' + body.access_token },
-        json: true
-      };
-
-      //OPTIONS LONG TIME TRACKS
-      const optionsLT = {
-        url: 'https://api.spotify.com/v1/me/top/tracks?time_range=long_term',
-        headers: { 'Authorization': 'Bearer ' + body.access_token },
-        json: true
-      };
-
-      const options2 = {
-        url: 'https://api.spotify.com/v1/me/player/recently-played?limit=10', //?limit=1 **PORQUE PESTE TÁ COM ERROR NO LIMITE? COMO SE GUARDASSE VALORES VAZIOS, NOT TRUSTED**
-        headers: { 'Authorization': 'Bearer ' + body.access_token },
-        json: true
-      };
-
-
-      //-----------
-      //WORK IN PROGRESS
-      let p1 = new Promise(
-        function(resolve,reject){
-          // use the access token to access the Spotify Web API
-
-          //ARTISTS SHORT TERM
-          request.get(optionsSA, function(error, response, body) {   
-            let count = 1; //Because it goes from #1 to #10
-
-            body.items.map(function(element){
-              artJ['artistas']['recentes'][count] = element.name;
-              count ++;
-            });
-          });
-
-          //ARTISTS MEDIUM TERM
-          request.get(optionsMA, function(error, response, body) {   
-            let count = 1; //Because it goes from #1 to #10
-            //let artists used to receive the return of this function (return element.name)
-            body.items.map(function(element){
-              artJ['artistas']['meio'][count] = element.name;
-              count ++;
-            });
-            //console.log(artJ); //debug
-            //console.log('/data?' + querystring.stringify(body));
-          });
-
-          //ARTISTS LONG TERM
-          request.get(optionsLA, function(error, response, body) {   
-            let count = 1; //Because it goes from #1 to #10
-            
-            body.items.map(function(element){
-              artJ['artistas']['geral'][count] = element.name;
-              count ++;
-            });
-            
-          });
-
-          resolve(console.log('done pt.1'));
-          
-        });
-
-
-      let p2 = new Promise(
-        function(resolve, reject){
-
-          //TRACKS SHORT TERM
-          request.get(optionsST, function(error, response, body) {   
-            let count = 1; //Because it goes from #1 to #10
-
-            body.items.map(function(element){
-              artJ['musicas']['recentes'][count] = element.artists[0].name + ' - ' + element.name;
-              count ++;
-            });
-          });
-
-          //TRACKS MEDIUM TERM
-          request.get(optionsMT, function(error, response, body) {   
-            let count = 1; //Because it goes from #1 to #10
-            
-            body.items.map(function(element){
-              artJ['musicas']['meio'][count] = element.artists[0].name + ' - ' + element.name;
-              count ++;
-            });
-           
-          });
-
-          //TRACKS LONG TERM
-          request.get(optionsLT, function(error, response, body) {   
-            let count = 1; //Because it goes from #1 to #10
-            
-            body.items.map(function(element){
-              artJ['musicas']['geral'][count] = element.artists[0].name + ' - ' + element.name;
-              count ++;
-            });
-            console.log(artJ); //debug
-          });
-
-          resolve(console.log('done pt.2'));
-
-        });
-      
-
-      p1.then(
-        request.get(options2,function(error,response,body) {
-          
-          artJ['ultimatocada'] = body.items[0].track.artists[0].name + ' - ' + body.items[0].track.name;
-          console.log(artJ['ultimatocada']);
-          return res.redirect('/data?' +
-            querystring.stringify(body));
-          
-          /* Porque Return? sem return funciona melhor
-          return res.redirect('/data?' +
-            querystring.stringify(body));
-          */
-        }));
-
-      //------------------------
-
+      function formatData(data, index){
+        return `${index + 1}. ${data.name}`;
+      }
+      axios(makeOptions('https://api.spotify.com/v1/me/top/artists?time_range=short_term'))
+        .then((result)=> {
+          data.artists.recents = result.data.items.map(formatData);
+          return axios(makeOptions('https://api.spotify.com/v1/me/top/artists?time_range=medium_term'))
+        }).then((result)=> {
+          data.artists.middle = result.data.items.map(formatData);;
+          return axios(makeOptions('https://api.spotify.com/v1/me/top/artists?time_range=long_term'))
+        }).then((result)=> {
+          data.artists.general = result.data.items.map(formatData);;
+          return axios(makeOptions('https://api.spotify.com/v1/me/top/tracks?time_range=short_term'))
+        }).then((result)=> {
+          data.tracks.recents = result.data.items.map(formatData);;
+          return axios(makeOptions('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term'))
+        }).then((result)=> {
+          data.tracks.middle = result.data.items.map(formatData);;
+          return axios(makeOptions('https://api.spotify.com/v1/me/top/tracks?time_range=long_term'))
+        }).then((result)=>{
+          data.tracks.general = result.data.items.map(formatData);;
+          return axios(makeOptions('https://api.spotify.com/v1/me/player/recently-played?limit=10'))
+        }).then((result)=>{
+          data.lastMusic = result.data.items.map((track, index)=> `${index + 1}. ${track.track.name}`);;
+          return res.send(data);
+        }).catch((error)=> res.send(error));
     }
-    else {
-      res.redirect('/#' +
-      querystring.stringify({
-        error: 'invalid_token'
-      }));
-    }
+    else return res.redirect(`/#${querystring.stringify({ error: 'invalid_token' })}`);
   });
 
 });

@@ -1,0 +1,9 @@
+.card-title {
+    text-align: center;
+    margin: 20px 0 0px 0px;
+}
+
+.btn-primary {
+    width: 100%;
+    border-radius: inherit;
+}
